@@ -145,14 +145,17 @@ class Zipper
      * @param $pathToAdd array|string An array or string of files and folders to add
      * @return $this Zipper instance
      */
-    public function add($pathToAdd)
+    public function add($pathToAdd, $fileName = null)
     {
         if (is_array($pathToAdd)) {
             foreach ($pathToAdd as $dir) {
                 $this->add($dir);
             }
         } else if ($this->file->isFile($pathToAdd)) {
-            $this->addFile($pathToAdd);
+            if ($fileName)
+                $this->addFile($pathToAdd, $fileName);
+            else
+                $this->addFile($pathToAdd);
         } else
             $this->addDir($pathToAdd);
 
@@ -360,7 +363,7 @@ class Zipper
         // Now let's visit the subdirectories and add them, too.
         foreach ($this->file->directories($pathToDir) as $dir) {
             $old_folder = $this->currentFolder;
-            $this->currentFolder = $this->currentFolder . '/' . basename($dir);
+            $this->currentFolder = empty($this->currentFolder) ? basename($dir) : $this->currentFolder . '/' . basename($dir);
             $this->addDir($pathToDir . '/' . basename($dir));
             $this->currentFolder = $old_folder;
         }
@@ -371,15 +374,16 @@ class Zipper
      *
      * @param $pathToAdd
      */
-    private function addFile($pathToAdd)
+    private function addFile($pathToAdd, $fileName = null)
     {
         $info = pathinfo($pathToAdd);
 
-        $file_name = isset($info['extension']) ?
-            $info['filename'] . '.' . $info['extension'] :
-            $info['filename'];
+        if (!$fileName)
+            $fileName = isset($info['extension']) ?
+                $info['filename'] . '.' . $info['extension'] :
+                $info['filename'];
 
-        $this->repository->addFile($pathToAdd, $this->getInternalPath() . $file_name);
+        $this->repository->addFile($pathToAdd, $this->getInternalPath() . $fileName);
     }
 	
     /**
